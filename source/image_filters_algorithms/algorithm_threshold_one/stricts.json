@@ -1,0 +1,13 @@
+{
+    "0":
+    {
+        "default": 120.0,
+        "type":"Float",
+        "display_type":"InputField",
+        "name":  "threshold",
+        "order": 1,
+        "max":  256,
+        "min":  0,
+        "step":  1
+    }
+}
