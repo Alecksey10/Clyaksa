@@ -42,6 +42,7 @@ class TrueClickThroughOverlay(QWidget):
             Qt.WindowStaysOnTopHint |
             Qt.Tool
         )
+        self.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setGeometry(100, 100, 400, 400)
 

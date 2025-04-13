@@ -58,3 +58,6 @@ class Utils:
                         resized[y, x, c] = np.clip(value, 0, 255)
 
         return resized.astype(array.dtype)
+    @staticmethod
+    def generate_numpy_canvas(shape):
+        return np.zeros(shape=shape)

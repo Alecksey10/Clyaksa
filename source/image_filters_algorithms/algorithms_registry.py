@@ -12,7 +12,8 @@ class AlgorithmsRegistry(abc.ABCMeta):
             if(not bool(cls.__abstractmethods__)):
                 #Регестрируем новый алгоритм
                 if(getattr(AlgorithmsRegistry, 'registred_classes', None)):
-                    AlgorithmsRegistry.registred_classes.append(cls)
+                    if(not cls in AlgorithmsRegistry.registred_classes):
+                        AlgorithmsRegistry.registred_classes.append(cls)
                 else:
                     AlgorithmsRegistry.registred_classes = [cls]
                 print(AlgorithmsRegistry.registred_classes) 

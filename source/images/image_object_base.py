@@ -11,11 +11,11 @@ class ImageObjectBase(abc.ABC):
         self._height = None
 
     @property
-    def width(self):
+    def width(self)->int:
         return self._width
 
     @property
-    def height(self):
+    def height(self)->int:
         return self._height
 
     @property

@@ -1,8 +1,16 @@
-from PySide6.QtCore import QObject
+from PySide6.QtGui import QImage
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QComboBox
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, QObject
 import sys
+import pathlib
 sys.path.append('.')
+from source.image_filters_algorithms.image_destructurizator_mvc.image_destructurizator_controller import ImageDestructurizatorController
+from source.images.image_object_widget import ImageObjectWidget
+from source.images.image_objects_data_extractor import ImageObjectsDataExtractor
+from source.images.image_objects_visualizer import ImageObjectsVisualizer
+from source.images.image_objets_fabric import ImageObjectsFabric
+
+from source.images.image_object_base import ImageObjectBase
 from source.commands.commands_generator.commands_generator_registry import CommandsGeneratorRegistry
 from source.commands.commands_generator_mvc.commands_generator_model_base import CommandsGeneratorModelBase
 from source.commands.commands_generator_mvc.commands_generator_view_base import CommandsGeneratorViewBase
@@ -44,13 +52,81 @@ class CommandsGeneratorControllerBase(QObject):
         print("generate btn pressed slot")
         self.generate_btn_pressed_signal.emit()
 
+    def get_commands_iterator(self):
+        return self.current_generator_controlller.get_commands_iterator()
+        
+    def process_image(self, image:ImageObjectBase):
+        return self.current_generator_controlller.process_image_object(image)
 
 
 
+
+
+def main():
+    #Запустим PySide6
+    app = QApplication(sys.argv)
+
+    #Загрузим картинку
+    path = pathlib.Path("./assets/fly.jpg")
+    qimage1 = QImage()
+    print(path.absolute())
+    qimage1.load(str(path.absolute()))
+    print(qimage1.size(),"width",qimage1.width(), qimage1)
+    # преобразуем в numpy
+    data = ImageObjectsDataExtractor.qimage_to_numpy(image=qimage1)
+    print(data.shape)
+    # Преобразуем к нашему формату ImageObjectBase
+    img_obj = ImageObjectsFabric.argb_from_numpy(data)
+    print(img_obj, img_obj.data.shape, img_obj.get_color_scheme(), img_obj.width)
+
+
+    # Построим контроллер, на сигналы которого будем преобразовывать картинки. 
+    image_destructurizator_controller = ImageDestructurizatorController(img_obj.width, img_obj.height)
+    image_destructurizator_controller.view.show()
+    
+    # Основная картинка
+    label = ImageObjectWidget()
+    label.set_image(qimage1)
+    label.show()
+
+    label2 = ImageObjectWidget()
+    label2.set_image(qimage1)
+    label2.show()
+    
+
+    # Виджет генератора
+    commands_generator_controller_base = CommandsGeneratorControllerBase()
+    commands_generator_controller_base.view.show()
+
+    image_filtered_obj = None
+
+    #Заглушка, как будем применять фильтр к картинке.
+    def image_filter_handler():
+        nonlocal image_filtered_obj
+        image_filtered_obj = image_destructurizator_controller.apply_algorithm_to_image(img_obj)
+        label2.set_image(ImageObjectsVisualizer.convert_image_obj_to_qimage(image_filtered_obj))
+        pass
+
+    #Заглушка, как будем применять фильтр к картинке.
+    def generator_btn_handler():
+        nonlocal image_filtered_obj
+        if(not image_filtered_obj):
+            return
+        commands_generator_controller_base.process_image(image_filtered_obj)
+        commands = commands_generator_controller_base.get_commands_iterator()
+        print(commands, len(commands))
+
+
+    image_destructurizator_controller.apply_filter_signal.connect(image_filter_handler)
+
+    commands_generator_controller_base.generate_btn_pressed_signal.connect(generator_btn_handler)
+
+
+
+    sys.exit(app.exec())
+    
+    pass
 
 
 if __name__=="__main__":
-    app = QApplication(sys.argv)
-    controller = CommandsGeneratorControllerBase()
-    controller.view.show()
-    sys.exit(app.exec())
+    main()

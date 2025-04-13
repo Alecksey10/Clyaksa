@@ -39,6 +39,7 @@ class CommandsGeneratorIntensivityView(QWidget):
 
         # 4. Checkbox-заглушка (сократить серию команд click)
         self.trim_commands_checkbox = QCheckBox("Сокращать команды")
+        self.trim_commands_checkbox.setChecked(True)
         layout.addWidget(self.trim_commands_checkbox)
 
         layout.addStretch()

@@ -11,7 +11,7 @@ from source.images.image_object_base import ImageObjectBase
 class ImageObjectARGB(ImageObjectBase):
     
     def __init__(self, numpy_data:np.ndarray):
-        self._width, self._height,_ = numpy_data.shape
+        self._height, self._width,_ = numpy_data.shape
         self.data = numpy_data
 
     @property

@@ -12,7 +12,8 @@ class CommandsGeneratorRegistry(abc.ABCMeta):
             if(not bool(cls.__abstractmethods__)):
                 #Регестрируем новый алгоритм
                 if(getattr(CommandsGeneratorRegistry, 'registred_classes', None)):
-                    CommandsGeneratorRegistry.registred_classes.append(cls)
+                    if(not cls in CommandsGeneratorRegistry.registred_classes):
+                        CommandsGeneratorRegistry.registred_classes.append(cls)
                 else:
                     CommandsGeneratorRegistry.registred_classes = [cls]
                 print(CommandsGeneratorRegistry.registred_classes) 
