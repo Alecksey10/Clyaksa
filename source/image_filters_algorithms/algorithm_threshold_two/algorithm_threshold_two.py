@@ -41,7 +41,7 @@ class AlgorithmThresholdTwoController(AlgorithmBaseController):
         luminance = 0.299 * r + 0.587 * g + 0.114 * b
 
         # Бинаризация
-        binary = np.where((luminance >= threshold_down) & (luminance <= threshold_top), 255, 0).astype(np.uint8)
+        binary = np.where((luminance <= threshold_down) | (luminance >= threshold_top), 255, 0).astype(np.uint8)
 
         return ImageObjectsFabric.binary_from_numpy(binary)
     

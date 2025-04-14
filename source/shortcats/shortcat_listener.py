@@ -2,7 +2,8 @@ import time
 from pynput import keyboard
 import threading
 
-class HotkeyLiveListener:
+class ShortcatListener:
+    #TODO баг, почему-то запоминает команды (SHIFT, например) и никак не выключает их. Походу, случается при одновременном нажатии клавишь. 
     def __init__(self, on_keys_updated=None):
         """
         :param on_keys_updated: функция, вызываемая при каждом изменении набора клавиш.
@@ -18,12 +19,16 @@ class HotkeyLiveListener:
             return  # уже запущен
 
         def on_press(key):
+            if(key == keyboard.Key.shift):
+                return
             with self._lock:
                 if key not in self._pressed_keys:
                     self._pressed_keys.add(key)
                     self._on_keys_updated(self._get_keys())
 
         def on_release(key):
+            if(key == keyboard.Key.shift):
+                return
             with self._lock:
                 if key in self._pressed_keys:
                     self._pressed_keys.remove(key)
@@ -50,8 +55,6 @@ class HotkeyLiveListener:
         result = [self._key_to_string(k) for k in self._pressed_keys]
         return result
 
-        
-
     def _key_to_string(self, key):
 
         try:
@@ -71,15 +74,15 @@ class HotkeyLiveListener:
             return replacements.get(name, name.title())
 
 def main():
-    listener:HotkeyLiveListener = None
+    listener:ShortcatListener = None
     def on_keys_updated(keys):
         print(keys)
         pass
-    listener = HotkeyLiveListener(on_keys_updated)
+    listener = ShortcatListener(on_keys_updated)
     listener.start() 
 
     while True:
         pass
-    
+
 if __name__=="__main__":
     main()

@@ -1,3 +1,4 @@
+from typing import List, Set
 from PySide6.QtWidgets import QWidget, QPushButton, QVBoxLayout, QLabel
 from PySide6.QtCore import Qt, Signal
 from pynput import keyboard
@@ -10,13 +11,17 @@ from pynput import keyboard
 import threading
 
 class ShortcatGetter(QWidget):
+    # TODO добавить нормализацию команд (сортировка)
+    # Добавить прокси для комманд? а то вдруг кроссплатформенности нет
+    # Добавить сортировку для листов команд? а то они перемешиваются при отображении
     '''Класс почти полностью написан нейронкой, но доведён до работоспособности, одурманящей ленивого '''
     combination_recording_done_signal = Signal()  # Сигнал с финальной комбинацией
+    combination_recording_started_signal = Signal()  # Сигнал о начале записи (то есть желательно отключить другие listeners)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Комбинация горячих клавиш")
-        self.setFixedSize(300, 140)
+        # self.setFixedSize(300, 140)
 
         self.label = QLabel("Нажмите 'Записать комбинацию'")
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -54,11 +59,17 @@ class ShortcatGetter(QWidget):
         self.label.setText("Зажмите клавиши...")
         self.button.setText("Остановить запись")
 
+        self.combination_recording_started_signal.emit()
         thread = threading.Thread(target=self._record_keys, daemon=True)
         thread.start()
-
+        
+    def is_recording(self):
+        return self._recording
+    
     def cancel_recording(self):
         """ Отмена записи — можно вызывать извне """
+        if(not self._recording):
+            return
         if self._listener:
             self._listener.stop()
         self._recording = False
@@ -78,6 +89,7 @@ class ShortcatGetter(QWidget):
             if len(self._pressed_keys) >= 3:
                 self.success = True
                 self._stop_listener()
+                self._emit_combination()
 
         def on_release(key):
             self._pressed_keys.discard(key)
@@ -85,16 +97,22 @@ class ShortcatGetter(QWidget):
                 if(len(self._final_keys)>0):
                     self.success = True
                 self._stop_listener()
+                self._emit_combination()
 
         self._listener = keyboard.Listener(on_press=on_press, on_release=on_release)
         self._listener.start()
         self._listener.join()
 
+    def set_keys(self, keys:Set[str]):
+        self._stop_listener()
+        self._final_keys = list(keys)
+        self.success = True
+        self._emit_combination()
+
     def _stop_listener(self):
         if self._listener:
             self._listener.stop()
         self._recording = False
-        self._emit_combination()
         self.button.setText("Записать комбинацию")
 
     def _update_label(self):
@@ -137,11 +155,16 @@ if __name__ == "__main__":
     from PySide6.QtWidgets import QApplication
     app = QApplication([])
     recorder = ShortcatGetter()
+    recorder.set_keys(set(["Ctrl", "Alt", "B"]))
+
+    def combination_recording_started_handler():
+        print("Запись начата")
 
     def combination_recorded_handler():
         print("комбинация записана", recorder.keys, recorder.success)
 
 
+    recorder.combination_recording_started_signal.connect(lambda: combination_recording_started_handler())
     recorder.combination_recording_done_signal.connect(lambda: combination_recorded_handler())
     recorder.show()
 

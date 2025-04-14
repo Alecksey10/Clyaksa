@@ -6,7 +6,7 @@ import sys
 
 sys.path.append(".")
 from source.shortcats.shortcat_getter import ShortcatGetter
-from source.shortcats.shortcat_listener import HotkeyLiveListener
+from source.shortcats.shortcat_listener import ShortcatListener
 
 
 class ShortcatMatcher:
@@ -37,7 +37,7 @@ if __name__ == "__main__":
 
     recorder = ShortcatGetter()
 
-    
+
     def logic():
         print("комбинация записана, повтори:", recorder.keys, recorder.success)
 
@@ -47,7 +47,7 @@ if __name__ == "__main__":
                 print("КЛАВИШИ СОШЛИСЬ", keys)
             pass
 
-        listener = HotkeyLiveListener(on_keys_updated)
+        listener = ShortcatListener(on_keys_updated)
         listener.start() 
         
     recorder.combination_recording_done_signal.connect(lambda: logic())

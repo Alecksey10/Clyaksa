@@ -1,5 +1,6 @@
 
 import copy
+import time
 from PySide6.QtCore import (QObject, Signal)
 from PySide6.QtWidgets import (QApplication)
 from PySide6.QtGui import (QImage, QPainter, QColor)
@@ -7,7 +8,11 @@ from PySide6.QtGui import (QImage, QPainter, QColor)
 import sys
 import pathlib
 
+
 sys.path.append(".")
+from source.commands.commands_executor.commands_executor_thread import CommandsExecutorThread
+from source.commands.commands_executor.commands_executor_mvc.commands_executor_controller import CommandsExecutorController
+from source.commands.commands_vizualizer.commands_vizualizer_controller import CommandsVizualizerController
 from source.commands.press_mouse import PressMouse
 from source.commands.release_mouse import ReleaseMouse
 
@@ -30,101 +35,13 @@ from source.images.utils import Utils
 
 from source.widgets.image_visualizer import ImageVizualizer
 
-class CommandsVizualizerController(QObject):
-    #TODO перенагруженный класс:
-    # 1) отвечает за визуализацию
-    # 2) отвечает за трансформацию
-    params_updated_signal = Signal()
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.view = CommandsVizualizerView()
-        self.model = CommandsVizualizerModel()
-        self._commands_iterator:CommandsIterator = CommandsIterator([])
-        self._vizualization_canvas:ImageObjectBase = None
-        self.commands_transformator = CommandsTransformator(rotation_deg=0, scale=1, shift_x=0, shift_y=0, 
-                                                            rotation_center_x=self._commands_iterator.width/2, rotation_center_y=self._commands_iterator.height/2,
-                                                              tolerance_rotation=0, tolerance_scale=0, tolerance_shift=0)
-    
-        self.view.params_updated_signal.connect(self.params_updated_slot)
-    
-    def set_commands_iterator(self, commands_iterator:CommandsIterator):
-        self._commands_iterator = commands_iterator
-        self.commands_transformator.rotation_center_x = self.commands_transformator.shift_x + self.commands_transformator.scale*self._commands_iterator.width/2
-        self.commands_transformator.rotation_center_y = self.commands_transformator.shift_y + self.commands_transformator.scale*self._commands_iterator.height/2
-
-        self.commands_transformator.scale_center_x = self.commands_transformator.shift_x #+ self.commands_transformator.scale*self._commands_iterator.width/2
-        self.commands_transformator.scale_center_y = self.commands_transformator.shift_y #+ self.commands_transformator.scale*self._commands_iterator.height/2
-        # self.rebuild_vizualization()
-    
-
-    def params_updated_slot(self):
-        self.commands_transformator.rotation_deg = self.view.angle_spinbox.value()
-        self.commands_transformator.scale = self.view.scale_spinbox.value()
-        print(self.commands_transformator)
-        self.params_updated_signal.emit()
-
-    def get_commands_visualization(self)->QImage:
-        #shift игнорируем при визуализации?...
-        width, height = self._commands_iterator.width, self._commands_iterator.height
-        width*=self.commands_transformator.scale
-        height*=self.commands_transformator.scale
-        result_img = QImage(width, height, QImage.Format.Format_RGB32)
-        result_img.fill(QColor(0,120,0,1))
-
-        
-        self._commands_iterator.restart()
-        current_pos = (0, 0)
-        #НА ВРЕМЯ ВИЗУАЛИЗАЦИИ ЗАБУДЕМ О СДВИГЕ И ЦЕНТРЕ
-        tmp_commands_transformator:CommandsTransformator = copy.copy(self.commands_transformator)
-        # tmp_commands_transformator.shift_x = 0
-        # tmp_commands_transformator.shift_y = 0
-        # tmp_commands_transformator.rotation_center_x = (width/2)
-        # tmp_commands_transformator.rotation_center_y = (height/2)
-        for command in self._commands_iterator:
-            if(isinstance(command,MoveMouseGlobal)):
-                current_pos = tmp_commands_transformator.apply_to_point(command.x, command.y)
-                current_pos = (current_pos[0] - tmp_commands_transformator.shift_x, current_pos[1] - tmp_commands_transformator.shift_y)
-                result_img.setPixelColor(current_pos[0], current_pos[1], QColor(122,122,122,255))
-            elif(isinstance(command,ClickMouse)):
-                command:ClickMouse
-                result_img.setPixelColor(current_pos[0], current_pos[1], QColor(0,0,0,255))
-            elif(isinstance(command,PressMouse)):
-                result_img.setPixelColor(current_pos[0], current_pos[1], QColor(255,0,0,255))
-            elif(isinstance(command,ReleaseMouse)):
-                result_img.setPixelColor(current_pos[0], current_pos[1], QColor(0,255,0,255))
-            else:
-                raise Exception(f"not supported command type {command}")
-                
-        
-        return result_img
-
-    def update_transform_shift(self, x, y):
-        self.view.coordinates_label.setText(f"Сдвиг координат x:{x:>5} y:{y:>5}")
-        self.commands_transformator.shift_x = x
-        self.commands_transformator.shift_y = y
-
-        width, height = self._commands_iterator.width, self._commands_iterator.height
-        width*=self.commands_transformator.scale
-        height*=self.commands_transformator.scale
-
-        self.commands_transformator.rotation_center_x = self.commands_transformator.shift_x + width/2
-        self.commands_transformator.rotation_center_y = self.commands_transformator.shift_y + height/2
-
-        self.commands_transformator.scale_center_x = self.commands_transformator.shift_x 
-        self.commands_transformator.scale_center_y = self.commands_transformator.shift_y
-        
-
-        
-def build():
-    pass
-
 def main():
     
-        #Запустим PySide6
+    #Запустим PySide6
     app = QApplication(sys.argv)
 
     #Загрузим картинку
-    path = pathlib.Path("./assets/fly.jpg")
+    path = pathlib.Path("./assets/хуй-3.jpg")
     qimage1 = QImage()
     print(path.absolute())
     qimage1.load(str(path.absolute()))
@@ -185,7 +102,7 @@ def main():
         pass
     image_destructurizator_controller.apply_filter_signal.connect(image_filter_handler)
 
-    commands_iterator :CommandsIterator = None
+    commands_iterator :CommandsIterator = CommandsIterator([])
     #Визуализация команд (вызывается при генерации или изменении параетров)
     def vizualizate_commands(commands_iterator):
             if (commands_iterator == None):
@@ -212,6 +129,7 @@ def main():
 
     # Будем захватывать движения от окна визуализации команд, для фиксации сдвигов
     def movement_handler():
+
         pos = vizualizated_commands_window.get_internal_pos()
         commands_vizualizer_controller.update_transform_shift(pos.x(), pos.y())
         pass
@@ -219,17 +137,58 @@ def main():
         
 
 
-
-
-
+    #-----------------------
+    # А здесь сам блок для исполнения команд
+    
 
     
+    ex = CommandsExecutorController()    
+    
+    commands_executor_thread = CommandsExecutorThread()
+    commands_executor_thread.start()
+    commands_executor_thread.set_commands_iterator(commands_iterator=commands_iterator)
+
+    def commands_executor_thread_start_signal():
+        
+        #иначе ранее зажатые горячие клавиши могут пересечься с ненужным фукнкционалом. И мышь будет кликаться с одной из зажатых клавишей
+        time.sleep(1)
+        vizualizated_commands_window.hide()
+        transformed_commands = []
+        commands_iterator.restart()
+        for command in commands_iterator:
+            transformed_commands.append(commands_vizualizer_controller.commands_transformator.transform_command(command=command))
+
+        transformed_commands_iterator = CommandsIterator(transformed_commands, width = commands_iterator.width, height = commands_iterator.height)
+
+        commands_executor_thread.set_commands_iterator(transformed_commands_iterator)
+
+
+        commands_executor_thread.restart_iterations()
+    def commands_executor_thread_resume_signal():
+        time.sleep(1)
+        vizualizated_commands_window.hide()
+        commands_executor_thread.resume_iterations()
+    def commands_executor_thread_stop_signal():
+        vizualizated_commands_window.show()
+        commands_executor_thread.stop_iterations()
+
+    def commands_executor_thread_params_changed():
+        print(ex.get_executing_time_ms())
+        commands_executor_thread.set_delta_time(ex.get_executing_time_ms())
+
+    ex.start_executing_signal.connect(commands_executor_thread_start_signal)
+    ex.resume_executing_signal.connect(commands_executor_thread_resume_signal)
+    ex.stop_executing_signal.connect(commands_executor_thread_stop_signal)
+    ex.params_updated_signal.connect(commands_executor_thread_params_changed)
+    
+    ex.view.show()    
 
 
 
 
 
     sys.exit(app.exec())
+
 
 if __name__=="__main__":
     main()
