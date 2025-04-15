@@ -19,28 +19,28 @@ from PySide6.QtWidgets import QApplication
 
 from source.image_filters_algorithms.algorithm_controller_base import AlgorithmBaseController
 import numpy as np
+from skimage import color, filters
 
-class AlgorithmThresholdTwoController(AlgorithmBaseController):
+class AlgorithmContour(AlgorithmBaseController):
 
     params_updated_signal = Signal()
 
     def __init__(self):
-        params_scheme_base:ParamsSchemeBase = StrictsLoader.load_fields_scheme_from_json(pathlib.Path("./source/image_filters_algorithms/algorithm_threshold_two/stricts.json"))
+        params_scheme_base:ParamsSchemeBase = StrictsLoader.load_fields_scheme_from_json(pathlib.Path("./source/image_filters_algorithms/algorithm_contour/stricts.json"))
         self.params_controller = ParamsController(params_scheme_base)
     
     def process_image(self, img_object:ImageObjectBase) -> ImageObjectBase:
         data:np.ndarray = ImageObjectsFabric.from_any_to_color_schema(img_object, ColorSchemas.Binary).get_as_numpy()
-        threshold_down = self.params_controller.params_scheme.get_param_by_name("threshold_down")
-        threshold_top = self.params_controller.params_scheme.get_param_by_name("threshold_top")
 
-        # Бинаризация
-        binary = np.where((data <= threshold_down) | (data >= threshold_top), 255, 0).astype(np.uint8)
-
+        edges = filters.sobel(data)
+        coef = self.params_controller.get_value("mulf_coef")
+        
+        binary = -((np.clip(edges*coef*255, 0, 255)).astype(np.uint8)-255)
         return ImageObjectsFabric.binary_from_numpy(binary)
     
     @classmethod
     def get_algorithm_name(cls):
-        return "threshold with 2 levels"
+        return "algorithms contour"
 
 def main():
     pass
@@ -57,7 +57,7 @@ if __name__=="__main__":
     #start pyside
     app = QApplication(sys.argv)
 
-    algorithm_controller = AlgorithmThresholdTwoController()
+    algorithm_controller = AlgorithmContour()
     algorithm_controller.params_controller.view.show()
     # filtered:ImageObjectBase = algorithm_controller.process_image()
 

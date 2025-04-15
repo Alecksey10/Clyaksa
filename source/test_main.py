@@ -41,16 +41,18 @@ def main():
     app = QApplication(sys.argv)
 
     #Загрузим картинку
-    path = pathlib.Path("./assets/хуй-3.jpg")
+    # path = pathlib.Path("./assets/fly.jpg")
+    path = pathlib.Path("/home/alecksey10/Загрузки/images.jpeg")
     qimage1 = QImage()
     print(path.absolute())
     qimage1.load(str(path.absolute()))
+    qimage1.convertTo(QImage.Format.Format_ARGB32)
     print(qimage1.size(),"width",qimage1.width(), qimage1)
     # преобразуем в numpy
     data = ImageObjectsDataExtractor.qimage_to_numpy(image=qimage1)
     print(data.shape)
     # Преобразуем к нашему формату ImageObjectBase
-    img_obj = ImageObjectsFabric.argb_from_numpy(data)
+    img_obj = ImageObjectsFabric.rgba_from_numpy(data)
     print(img_obj, img_obj.data.shape, img_obj.get_color_scheme(), img_obj.width)
 
 
@@ -72,7 +74,8 @@ def main():
     commands_generator_controller_base = CommandsGeneratorControllerBase()
     commands_generator_controller_base.view.show()
 
-    image_filtered_obj = None
+    tmp_filtered_obj = None
+    pinned_img_obj = tmp_filtered_obj
 
 
     #На данный момент построено всё, чтобы создавать фильтрованное изображение и команды.
@@ -95,12 +98,29 @@ def main():
     #Теперь слоты-заглушки для передачи данных 
     #TODO, по идее нужны мокнутые данные... 
     #Заглушка, как будем применять фильтр к картинке.
-    def image_filter_handler():
-        nonlocal image_filtered_obj
-        image_filtered_obj = image_destructurizator_controller.apply_algorithm_to_image(img_obj)
-        label2.set_image(ImageObjectsVisualizer.convert_image_obj_to_qimage(image_filtered_obj))
+    def some_handler_on_filter_apply():
+        nonlocal tmp_filtered_obj
+        tmp_filtered_obj = image_destructurizator_controller.apply_algorithm_to_image(img_obj)
+        label2.set_image(ImageObjectsVisualizer.convert_image_obj_to_qimage(tmp_filtered_obj))
         pass
-    image_destructurizator_controller.apply_filter_signal.connect(image_filter_handler)
+
+    def some_handler_on_filter_apply_to_filtered():
+        nonlocal tmp_filtered_obj
+        tmp_filtered_obj = image_destructurizator_controller.apply_algorithm_to_image(pinned_img_obj)
+        label2.set_image(ImageObjectsVisualizer.convert_image_obj_to_qimage(tmp_filtered_obj))
+        pass
+
+    def some_handler_pinn_filtered():
+        nonlocal tmp_filtered_obj
+        nonlocal pinned_img_obj
+        pinned_img_obj = tmp_filtered_obj
+        pass
+
+    image_destructurizator_controller.apply_filter_signal.connect(some_handler_on_filter_apply)
+    image_destructurizator_controller.apply_filter_to_pinned_signal.connect(some_handler_on_filter_apply_to_filtered)
+    image_destructurizator_controller.pinn_filtered_image_signal.connect(some_handler_pinn_filtered)
+
+
 
     commands_iterator :CommandsIterator = CommandsIterator([])
     #Визуализация команд (вызывается при генерации или изменении параетров)
@@ -117,10 +137,10 @@ def main():
     #Заглушка, как будем применять фильтр к картинке.
     def generator_btn_handler():
         nonlocal commands_iterator
-        nonlocal image_filtered_obj
-        if(not image_filtered_obj):
+        nonlocal tmp_filtered_obj
+        if(not tmp_filtered_obj):
             return
-        commands_generator_controller_base.process_image(image_filtered_obj)
+        commands_generator_controller_base.process_image(tmp_filtered_obj)
         commands_iterator = commands_generator_controller_base.get_commands_iterator()
         print(commands_iterator, len(commands_iterator))
         vizualizate_commands(commands_iterator)

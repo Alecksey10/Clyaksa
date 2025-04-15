@@ -22,6 +22,8 @@ class ImageObjectWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.addWidget(self.scroll_area)
 
+        self.last_size = None
+
     def set_image(self, image: QImage):
         """Установить новое изображение"""
         self._qimage = image
@@ -40,6 +42,21 @@ class ImageObjectWidget(QWidget):
             Qt.TransformationMode.SmoothTransformation
         )
         self.label.setPixmap(scaled)
+    def resize_to_content(self):
+        new_size = self.pixmap.size()
+        if(new_size.width()<10 or new_size.height()<10):
+            return
+        
+        self.resize(new_size)
+        pass
+
+    def show(self):
+        if(self.last_size):
+            self.resize(self.last_size)
+        return super().show()
+    def hide(self):
+        self.last_size = self.size()
+        super().hide()
 
     def wheelEvent(self, event: QWheelEvent):
         """Обработка масштабирования колесиком мыши"""

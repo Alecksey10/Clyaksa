@@ -6,6 +6,8 @@ class ImageObjectsDataExtractor():
     
     @staticmethod
     def qimage_to_numpy(image: QImage) -> np.ndarray:
+        if(image.isNull()):
+            raise Exception(f"image is null {image}")
         image = image.convertToFormat(QImage.Format.Format_RGBA8888)
         width = image.width()
         height = image.height()

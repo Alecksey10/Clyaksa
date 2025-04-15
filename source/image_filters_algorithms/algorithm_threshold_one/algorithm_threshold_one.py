@@ -4,6 +4,7 @@ import pathlib
 import sys
 
 sys.path.append(".")
+from source.images.color_schemas import ColorSchemas
 from source.images.image_objets_fabric import ImageObjectsFabric
 
 from source.images.image_object_base import ImageObjectBase
@@ -28,19 +29,12 @@ class AlgorithmThresholdOneController(AlgorithmBaseController):
         self.params_controller = ParamsController(params_scheme_base)
     
     def process_image(self, img_object:ImageObjectBase) -> ImageObjectBase:
-        data:np.ndarray = img_object.get_as_numpy()
+        data:np.ndarray = ImageObjectsFabric.from_any_to_color_schema(img_object, ColorSchemas.Binary).get_as_numpy()
         threshold = self.params_controller.params_scheme.get_param_by_name("threshold")
 
-        a = data[..., 0]  # alpha, если нужно
-        r = data[..., 1]
-        g = data[..., 2]
-        b = data[..., 3]
-
-        # Перцептивное среднее
-        luminance = 0.299 * r + 0.587 * g + 0.114 * b
 
         # Бинаризация
-        binary = np.where(luminance >= threshold, 255, 0).astype(np.uint8)
+        binary = np.where(data >= threshold, 255, 0).astype(np.uint8)
 
         return ImageObjectsFabric.binary_from_numpy(binary)
 

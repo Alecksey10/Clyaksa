@@ -1,11 +1,13 @@
 from threading import Lock, Thread
 import time
 
+from PySide6.QtCore import QThread, Signal
 from source.commands.commands_executor.commands_executor import CommandsExecutor
 from source.commands.commands_iterator.commands_iterator import CommandsIterator
 
-class CommandsExecutorThread(Thread):
+class CommandsExecutorThread(QThread):
     
+    iterations_done_signal = Signal()
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.b_is_running = False
@@ -34,6 +36,7 @@ class CommandsExecutorThread(Thread):
             except StopIteration:
                 self.stop_iterations()
                 self.b_is_done = True
+                self.iterations_done_signal.emit()
             except Exception as ex:
                 self.stop_iterations()
                 self.b_is_done = True

@@ -35,6 +35,8 @@ from PySide6.QtCore import Signal
 class ImageDestructurizatorController(QObject):
 
     apply_filter_signal = Signal()
+    pinn_filtered_image_signal = Signal()
+    apply_filter_to_pinned_signal = Signal()
 
     def __init__(self, width, height, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -73,11 +75,14 @@ class ImageDestructurizatorController(QObject):
         self.view.layout().addWidget(self.view.width_spin)
         self.view.layout().addWidget(QLabel("Высота"))
         self.view.layout().addWidget(self.view.height_spin)
+        self.view.layout().addWidget(self.view.button_pinn_filtered)
         self.view.layout().addWidget(self.view.button)        
-
+        self.view.layout().addWidget(self.view.button_pinned)
 
         # Сигналы (можно привязать обработчики)
-        self.view.button.clicked.connect(self.apply_filter_slot)
+        self.view.apply_filter_signal.connect(self.apply_filter_slot)
+        self.view.apply_filter_to_pinned_signal.connect(self.apply_filter_to_pinned_slot)
+        self.view.pinn_filtered_image_signal.connect(self.pinn_filtered_image_slot)
         # self.view.apply_filter_signal.connect(self.apply_filter_slot)
 
     def reinit_algorithm(self, algorithm_base_controller: AlgorithmBaseController):
@@ -111,8 +116,18 @@ class ImageDestructurizatorController(QObject):
     def apply_filter_slot(self):
         print("self filter applied")
         self.apply_filter_signal.emit()
-        #А также применим фильтры в рамках данного виджета
+    
+    def apply_filter_to_pinned_slot(self):
+        print("self filter applied to pinned")
+        self.apply_filter_to_pinned_signal.emit()
+    
+    def pinn_filtered_image_slot(self):
+        print("self, pinn filtered image signal")
+        self.pinn_filtered_image_signal.emit()
         
+    def update_settings_to_image_size(self, width, height):
+        self.view.width_spin.setValue(width)
+        self.view.height_spin.setValue(height)
 
 
 
@@ -121,7 +136,7 @@ def main():
     app = QApplication(sys.argv)
 
     #Загрузим картинку
-    path = pathlib.Path("./assets/cherv.jpg")
+    path = pathlib.Path("./assets/fly.jpg")
     qimage1 = QImage()
     print(path.absolute())
     qimage1.load(str(path.absolute()))
@@ -130,7 +145,9 @@ def main():
     data = ImageObjectsDataExtractor.qimage_to_numpy(image=qimage1)
     print(data.shape)
     # Преобразуем к нашему формату ImageObjectBase
-    img_obj = ImageObjectsFabric.argb_from_numpy(data)
+    img_obj = ImageObjectsFabric.rgba_from_numpy(data)
+    pinned_img_obj = img_obj
+    tmp_filtered_obj = img_obj
     print(img_obj, img_obj.data.shape, img_obj.get_color_scheme(), img_obj.width)
 
 
@@ -147,12 +164,27 @@ def main():
     label2.set_image(qimage1)
     label2.show()
     #Заглушка, как будем применять фильтр к картинке.
-    def some_handler():
-        qimage_filtered = image_destructurizator_controller.apply_algorithm_to_image(img_obj)
-        label2.set_image(ImageObjectsVisualizer.convert_image_obj_to_qimage(qimage_filtered))
+    def some_handler_on_filter_apply():
+        nonlocal tmp_filtered_obj
+        tmp_filtered_obj = image_destructurizator_controller.apply_algorithm_to_image(img_obj)
+        label2.set_image(ImageObjectsVisualizer.convert_image_obj_to_qimage(tmp_filtered_obj))
         pass
 
-    image_destructurizator_controller.apply_filter_signal.connect(some_handler)
+    def some_handler_on_filter_apply_to_filtered():
+        nonlocal tmp_filtered_obj
+        tmp_filtered_obj = image_destructurizator_controller.apply_algorithm_to_image(pinned_img_obj)
+        label2.set_image(ImageObjectsVisualizer.convert_image_obj_to_qimage(tmp_filtered_obj))
+        pass
+
+    def some_handler_pinn_filtered():
+        nonlocal tmp_filtered_obj
+        nonlocal pinned_img_obj
+        pinned_img_obj = tmp_filtered_obj
+        pass
+
+    image_destructurizator_controller.apply_filter_signal.connect(some_handler_on_filter_apply)
+    image_destructurizator_controller.apply_filter_to_pinned_signal.connect(some_handler_on_filter_apply_to_filtered)
+    image_destructurizator_controller.pinn_filtered_image_signal.connect(some_handler_pinn_filtered)
 
     sys.exit(app.exec())
     

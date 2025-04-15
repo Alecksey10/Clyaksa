@@ -30,35 +30,30 @@ class CommandsTransformator:
 
     def apply_to_point(self, x: float, y: float) -> tuple[float, float]:
         """
-        Применяет трансформацию к точке (x, y) с учётом центра трансформации.
-        Последовательность: перенос → масштабирование и поворот → обратный перенос → сдвиг.
+        Применяет трансформацию к точке (x, y):
+        1. Масштабирование относительно scale-центра
+        2. Поворот относительно rotation-центра
+        3. Сдвиг
         """
-        # Переносим точку в систему координат с центром в (center_x, center_y)
-        rotation_center_x = self.rotation_center_x - self.shift_x
-        rotation_center_y = self.rotation_center_y - self.shift_y
-        scale_center_x = self.scale_center_x - self.shift_x
-        scale_center_y = self.scale_center_y - self.shift_y
 
-        x =x - rotation_center_x
-        y =y - rotation_center_y
-        # Масштабирование
-        # x *= self.scale
-        # y *= self.scale
+        # --- Масштаб относительно scale центра ---
+        x_scaled = (x - self.scale_center_x) * self.scale + self.scale_center_x
+        y_scaled = (y - self.scale_center_y) * self.scale + self.scale_center_y
 
-        # Поворот
+        # --- Поворот относительно rotation центра ---
+        dx = x_scaled - self.rotation_center_x
+        dy = y_scaled - self.rotation_center_y
+
         rad = math.radians(self.rotation_deg)
         cos_a = math.cos(rad)
         sin_a = math.sin(rad)
-        x_rot = x * cos_a - y * sin_a
-        y_rot = x * sin_a + y * cos_a
 
-        # Переносим обратно и применяем сдвиг
-        x_final = x_rot +rotation_center_x
-        y_final = y_rot +rotation_center_y
+        x_rot = dx * cos_a - dy * sin_a + self.rotation_center_x
+        y_rot = dx * sin_a + dy * cos_a + self.rotation_center_y
 
-        x_final = (x_final - scale_center_x)*self.scale+scale_center_x + self.shift_x
-        y_final = (y_final - scale_center_y)*self.scale+scale_center_y + self.shift_y
-
+        # --- Финальный сдвиг ---
+        x_final = x_rot + self.shift_x
+        y_final = y_rot + self.shift_y
 
         return x_final, y_final
     
@@ -89,11 +84,24 @@ print(transformator.apply_to_point(4, -2)) # -4, -2 > 3.0, 0
 transformator = CommandsTransformator()
 transformator.shift_x = 3
 transformator.shift_y = -2
-transformator.rotation_center_x = 3
-transformator.rotation_center_y = -2
-transformator.scale_center_x = 3
-transformator.scale_center_y = -2
+transformator.rotation_center_x = 0
+transformator.rotation_center_y = 0
+transformator.scale_center_x = 0
+transformator.scale_center_y = 0
 transformator.rotation_deg = 90
 transformator.scale = 2
 
 print(transformator.apply_to_point(1, 0)) # -4, -2 > 3.0, 0
+print(transformator.apply_to_point(2, 0)) # -4, -2 > 3.0, 2
+
+# transformator = CommandsTransformator()
+# transformator.shift_x = 0
+# transformator.shift_y = 0
+# transformator.rotation_center_x = 20
+# transformator.rotation_center_y = 20
+# transformator.scale_center_x = 20
+# transformator.scale_center_y = 20
+# transformator.rotation_deg = 90
+# transformator.scale = 2
+
+# print(transformator.apply_to_point(10, 10)) # -4, -2 > 3.0, 0

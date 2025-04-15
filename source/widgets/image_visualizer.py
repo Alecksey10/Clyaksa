@@ -46,6 +46,7 @@ class ImageVizualizer(QWidget):
         self.__b_drag_and_drop = True
         self.__always_on_top = True
         self.opacity = 1.0
+        self.pos_before_hide:QPoint = None
         if(img==None):
             self.img = QImage()
         else:
@@ -212,6 +213,17 @@ class ImageVizualizer(QWidget):
     def get_internal_pos(self) -> QPoint:
         return self.mapToGlobal(self.contentsRect().topLeft())
 
+    def hide(self):
+        self.pos_before_hide = self.pos()
+        return super().hide()
+    
+    def show(self):
+        
+        result = super().show()
+        if(self.pos_before_hide):
+            if(self.pos_before_hide!=self.pos()):
+                self.move(self.pos_before_hide)
+        return result
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = ImageVizualizer(QImage())

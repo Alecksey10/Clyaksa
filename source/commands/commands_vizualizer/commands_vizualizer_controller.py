@@ -49,11 +49,11 @@ class CommandsVizualizerController(QObject):
     
     def set_commands_iterator(self, commands_iterator:CommandsIterator):
         self._commands_iterator = commands_iterator
-        self.commands_transformator.rotation_center_x = self.commands_transformator.shift_x + self.commands_transformator.scale*self._commands_iterator.width/2
-        self.commands_transformator.rotation_center_y = self.commands_transformator.shift_y + self.commands_transformator.scale*self._commands_iterator.height/2
+        self.commands_transformator.rotation_center_x = self.commands_transformator.scale*self._commands_iterator.width/2
+        self.commands_transformator.rotation_center_y = self.commands_transformator.scale*self._commands_iterator.height/2
 
-        self.commands_transformator.scale_center_x = self.commands_transformator.shift_x #+ self.commands_transformator.scale*self._commands_iterator.width/2
-        self.commands_transformator.scale_center_y = self.commands_transformator.shift_y #+ self.commands_transformator.scale*self._commands_iterator.height/2
+        self.commands_transformator.scale_center_x = 0#self.commands_transformator.scale*self._commands_iterator.width/2
+        self.commands_transformator.scale_center_y = 0#self.commands_transformator.scale*self._commands_iterator.height/2
         # self.rebuild_vizualization()
     
 
@@ -103,15 +103,15 @@ class CommandsVizualizerController(QObject):
         self.commands_transformator.shift_x = x
         self.commands_transformator.shift_y = y
 
-        width, height = self._commands_iterator.width, self._commands_iterator.height
-        width*=self.commands_transformator.scale
-        height*=self.commands_transformator.scale
+        # width, height = self._commands_iterator.width, self._commands_iterator.height
+        # width*=self.commands_transformator.scale
+        # height*=self.commands_transformator.scale
 
-        self.commands_transformator.rotation_center_x = self.commands_transformator.shift_x + width/2
-        self.commands_transformator.rotation_center_y = self.commands_transformator.shift_y + height/2
+        # self.commands_transformator.rotation_center_x = self.commands_transformator.shift_x + width/2
+        # self.commands_transformator.rotation_center_y = self.commands_transformator.shift_y + height/2
 
-        self.commands_transformator.scale_center_x = self.commands_transformator.shift_x 
-        self.commands_transformator.scale_center_y = self.commands_transformator.shift_y
+        # self.commands_transformator.scale_center_x = self.commands_transformator.shift_x + width/2
+        # self.commands_transformator.scale_center_y = self.commands_transformator.shift_y + height/2
         
 
         
@@ -133,7 +133,7 @@ def main():
     data = ImageObjectsDataExtractor.qimage_to_numpy(image=qimage1)
     print(data.shape)
     # Преобразуем к нашему формату ImageObjectBase
-    img_obj = ImageObjectsFabric.argb_from_numpy(data)
+    img_obj = ImageObjectsFabric.rgba_from_numpy(data)
     print(img_obj, img_obj.data.shape, img_obj.get_color_scheme(), img_obj.width)
 
 

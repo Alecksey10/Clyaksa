@@ -73,7 +73,7 @@ if __name__=="__main__":
     qimage1.load(str(path.absolute()))
     data = ImageObjectsDataExtractor.qimage_to_numpy(image=qimage1)
     print(data.shape)
-    img_obj = ImageObjectsFabric.argb_from_numpy(data)
+    img_obj = ImageObjectsFabric.rgba_from_numpy(data)
     print(img_obj, img_obj.data.shape, img_obj.get_color_scheme(), img_obj.width)
 
 

@@ -81,9 +81,19 @@ class TrueClickThroughOverlay(QWidget):
         xlib.XFlush(display)
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = TrueClickThroughOverlay()
-    sys.exit(app.exec())
+    # app = QApplication(sys.argv)
+    # window = TrueClickThroughOverlay()
+    # sys.exit(app.exec())
+
+    import numpy as np
+
+    a = np.ones(shape=(5,5,4))
+    a[:,:,:]*=1
+    a[:,:,1]*=2
+    a[:,:,2]*=3
+    a[:,:,3]*=4
+    print(a[:,:,3])
+    print((a[:,:,0:3]).shape)
 
 
 

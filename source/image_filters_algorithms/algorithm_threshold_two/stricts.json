@@ -5,7 +5,7 @@
         "type":"Float",
         "display_type":"InputField",
         "name":  "threshold_down",
-        "order": 1,
+        "order": 0,
         "max":  256,
         "min":  0,
         "step":  1

@@ -11,6 +11,9 @@ from source.params_mvc.params_view import ParamsView
 
 class ImageDestructurizatorView(QWidget):
     apply_filter_signal = Signal()
+    apply_filter_to_pinned_signal = Signal()
+
+    pinn_filtered_image_signal = Signal()
     def __init__(self,width, height,  *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -28,6 +31,13 @@ class ImageDestructurizatorView(QWidget):
         self.height_spin.setSingleStep(1)
         self.height_spin.setValue(height)
 
+        self.button_pinn_filtered = QPushButton("Закрепить результат")
+        self.button_pinn_filtered.clicked.connect(self.pinn_filtered_image_signal.emit)
+
         self.button = QPushButton("Применить фильтр")
+        self.button.clicked.connect(self.apply_filter_signal.emit)
+        
+        self.button_pinned = QPushButton("Применить фильтр к закреплённой")
+        self.button_pinned.clicked.connect(self.apply_filter_to_pinned_signal.emit)
         self.setLayout(QVBoxLayout())
         
