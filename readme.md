@@ -78,24 +78,29 @@
 
 python 3.12?
 
+sudo apt install build-essential python3-dev
+sudo apt install gcc
+sudo apt install libxcb-cursor0
+
+
 ### С локальным окружением (потом снести легче будет)
 
 Linux
 
 ```bash
-cd Clyacksa
+cd Clyaksa
 python -m venv ./venv
 source ./venv/bin/activate
 pip install -r requirements.txt
-python main_window.py
+python ./source/main_window.py
 ```
 
 ### с глобальным окружением
 
 ```bash
-cd Clyacksa
+cd Clyaksa
 pip install -r requirements.txt
-python main_window.py
+python ./source/main_window.py
 ```
 
 ## Пример работы
